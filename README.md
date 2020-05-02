@@ -1,1 +1,1 @@
- [Türkçe İçerikler](./tr)
+ - [Türkçe İçerikler](./tr)
