@@ -205,5 +205,7 @@ public class RolesController: ControllerBase
 }
 ````
 
+### Kaynaklar
 
+- [Policy-based authorization in ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-3.1)
 
