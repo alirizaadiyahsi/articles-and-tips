@@ -1,3 +1,7 @@
+ASP.NET Core projelerinizde, yetkilendirmeleri `Policy` ler ile yapabiliriz. 
+Örneğin izinleri (`Permissions`) policy olarak tanımlayıp, her isteği bu izinlere göre yetkilendirebiliriz.
+
+İzinleri aşağıdaki gibi tanımlayabiliriz.
 
 **Permissions.cs**
 
@@ -31,6 +35,10 @@ public static class Permissions
 }
 ````
 
+İzinleri bir liste olarak değilde, sabit(constants) olarak tanımladık, çünkü aynı zamanda bunları, `AuthorizeAttribute` içinde parametre olarak verebilelim diye. `AuthorizeAttribute` sadece `const` tipinde değişkenleri kabul ediyor.
+
+İzinleri `Policy` olarak eklemek için, `IAuthorizationRequirement` sınıfından kalıtım alan, `PermissionRequirement.cs` tipinde bir sınıf ekliyoruz. 
+
 **PermissionRequirement.cs**
 
 ````c#
@@ -44,6 +52,8 @@ public class PermissionRequirement : IAuthorizationRequirement
     public string Permission { get; }
 }
 ````
+
+ASP.NET Core yetkilendirme olaylarını tekip eden bir servis sağlıyor, `IAuthorizationHandler`. Biz de izinleri(permissions) yakalamak için bu `AuthorizationHandler` sınıfından türettiğimiz `PermissionHandler.cs` sınıfını kullanacağız.
 
 **PermissionHandler.cs**
 
@@ -65,6 +75,7 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
             return;
         }
 
+        // Kullanıcının ilgili role sahip olup olmadığı kontrol ediliyor.
         var hasPermission = await _permissionAppService.IsUserGrantedToPermissionAsync(context.User.Identity.Name, requirement.Permission);
         if (hasPermission)
         {
@@ -73,6 +84,9 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
     }
 }
 ````
+
+Tabiki yukarıda eklediğimiz sınıfları, `Startup.cs` içinde ayarlarını yapıp, DI Container'a register etmemiz gerekiyor.
+Ayrıca `Permissions.cs` içinde tanımladığımız statik izinleride, policy listesine eklememiz gerekiyor.
 
 **Startup.cs**
 
@@ -93,8 +107,9 @@ public class Startup
         services.AddScoped<IAuthorizationHandler, PermissionHandler>();
         services.AddAuthorization(options =>
         {
-            foreach (var permission in AppPermissions.GetAll())
+            foreach (var permission in Permissions.GetAll())
             {
+                // İzinleri policy listesine ekliyoruz
                 options.AddPolicy(permission,
                     policy => policy.Requirements.Add(new PermissionRequirement(permission)));
             }
@@ -122,6 +137,8 @@ public class Startup
 }
 ````
 
+Artık policy tabanlı yetkilendirmeyi, controller sınıfı veya metodlarında kullanabiliriz. Tek yapmak gereken, sınıfın veya metodun başına `[Authorize(Permissions....)]` şeklinde tanımlama yapmak.
+
 **RolesController.cs**
 
 ````c#
@@ -135,7 +152,7 @@ public class RolesController: ControllerBase
     }
 
     [HttpGet]
-    [Authorize(AppPermissions.Roles.Read)]
+    [Authorize(Permissions.Roles.Read)]
     public async Task<ActionResult<RoleOutput>> GetRoles(Guid id)
     {
         var role = await _roleAppService.GetAsync(id);
@@ -145,7 +162,7 @@ public class RolesController: ControllerBase
     }
 
     [HttpGet]
-    [Authorize(AppPermissions.Roles.Read)]
+    [Authorize(Permissions.Roles.Read)]
     public async Task<ActionResult<IPagedListResult<RoleListOutput>>> GetRoles(PagedListInput input)
     {
         var roles = await _roleAppService.GetListAsync(input);
@@ -154,7 +171,7 @@ public class RolesController: ControllerBase
     }
 
     [HttpPost]
-    [Authorize(AppPermissions.Roles.Create)]
+    [Authorize(Permissions.Roles.Create)]
     public async Task<ActionResult<RoleOutput>> PostRoles(CreateRoleInput input)
     {
         var role = await _authorizationAppService.FindRoleByNameAsync(input.Name);
@@ -166,7 +183,7 @@ public class RolesController: ControllerBase
     }
 
     [HttpPut]
-    [Authorize(AppPermissions.Roles.Update)]
+    [Authorize(Permissions.Roles.Update)]
     public async Task<ActionResult<RoleOutput>> PutRoles(UpdateRoleInput input)
     {
         var role = await _authorizationAppService.FindRoleByNameAsync(input.Name);
@@ -178,7 +195,7 @@ public class RolesController: ControllerBase
     }
 
     [HttpDelete]
-    [Authorize(AppPermissions.Roles.Delete)]
+    [Authorize(Permissions.Roles.Delete)]
     public async Task<ActionResult<RoleOutput>> DeleteRoles(Guid id)
     {
         var roleOutput = await _roleAppService.DeleteAsync(id);
