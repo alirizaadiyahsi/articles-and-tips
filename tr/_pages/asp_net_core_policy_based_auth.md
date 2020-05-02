@@ -72,6 +72,7 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
         }
     }
 }
+````
 
 **Startup.cs**
 
