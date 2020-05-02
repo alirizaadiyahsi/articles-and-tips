@@ -1,1 +1,1 @@
-# Türkçe İçerikler
+ [Türkçe İçerikler](./tr)
