@@ -1,1 +1,1 @@
-[Value Object Nedir?](/_pages/value_object.md)
+[Value Object Nedir?](./_pages/value_object.md)
