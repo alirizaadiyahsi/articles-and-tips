@@ -1,4 +1,4 @@
-### Entity Framework ve Value Object
+### Entity Framework Core ve Value Object
 
 `Value Object` için çok fazla tanım ve teknik açıklama var.
 Bundan dolayı `Value Object` nedir, konularına girmeyeceğim. 
