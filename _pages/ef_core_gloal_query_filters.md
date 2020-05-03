@@ -84,4 +84,6 @@ public static class EntityTypeBuilderExtensions
 
 Artık tüm veritabanı sorguları `IsDeleted == false` olarak filrelenmiş olarak gelecek. Ekstra `where` sorgusu yazmaya gerek yok.
 
+#### Kaynaklar
 
+https://gist.github.com/haacked/febe9e88354fb2f4a4eb11ba88d64c24
