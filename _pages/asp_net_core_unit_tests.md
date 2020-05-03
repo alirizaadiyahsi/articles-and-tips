@@ -1,6 +1,6 @@
 ### ASP.NET Core Birim Testler - Örnekler (ASP.NET Core Unit Tests wiht xUnit and Moq)
 
-#### Controller Testleri
+### Controller Testleri
 
 Aşağıdaki gibi bir controller sınıfımız olsun;
 
@@ -158,7 +158,7 @@ var accountController = new AccountController(
 
 `HttpContext.User` tanımı yaparak, controller sınıfının o an login olan kullanıcıyı tanımasını sağlıyoruz. 
 
-#### UserManager ve RoleManager kullanan sınıfların test edilmesi
+### UserManager ve RoleManager kullanan sınıfların test edilmesi
 
 ASP.NET Core'da tanımlı olan `UserManager` ve `RoleManager` sınıflarını kullanan kendi sınıflarımızı (örneğin, application-service, repository gibi) nasıl test edebileceğimize bir bakalım. 
 
