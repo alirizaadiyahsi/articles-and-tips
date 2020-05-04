@@ -162,7 +162,163 @@ var accountController = new AccountController(
 
 ASP.NET Core'da tanımlı olan `UserManager` ve `RoleManager` sınıflarını kullanan kendi sınıflarımızı (örneğin, application-service, repository gibi) nasıl test edebileceğimize bir bakalım. 
 
+Bu test için `PermissionAppService` adında bir application-service sınıfını test edeceğiz.
 
+**PermissionAppService.cs**
 
+````c#
+public class PermissionAppService : IPermissionAppService
+{
+    private readonly UserManager<User> _userManager;
+    private readonly RoleManager<Role> _roleManager;
 
+    public PermissionAppService(UserManager<User> userManager, RoleManager<Role> roleManager)
+    {
+        _userManager = userManager;
+        _roleManager = roleManager;
+    }
 
+    public async Task<bool> IsUserGrantedToPermissionAsync(string userName, string permission)
+    {
+        var user = await _userManager.FindByNameAsync(userName);
+        var userClaims = await _userManager.GetClaimsAsync(user);
+        if (userClaims.Any(x => x.Type == CustomClaimTypes.Permission && x.Value == permission))
+        {
+            return true;
+        }
+
+        var userRoles = user.UserRoles.Select(ur => ur.Role);
+        foreach (var role in userRoles)
+        {
+            var roleClaims = await _roleManager.GetClaimsAsync(role);
+            if (roleClaims.Any(x => x.Type == CustomClaimTypes.Permission && x.Value == permission))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+````
+
+Bu servis, kullanıcı adını ve kullanıcı iznini (permission) alarak, kullanıcının bu izne yetkisi olup olmadığını dönüyor. Yazacağımız test de bir iznin kullanıcıya veya kullanıcının bağlı olduğu role ait olup olmadığına göre bir sonuç dönecek. Ayrıca başarısız senaryolarıda test ediyoruz.
+
+**PermissionAppServiceTests.cs**
+
+````c#
+public class PermissionAppServiceTests : AppServiceTestBase
+{
+    private readonly IPermissionAppService _permissionAppService;
+    private static readonly string TestPermissionClaimForUser = "TestPermissionClaimForUser";
+    private static readonly string TestPermissionClaimForRole = "TestPermissionClaimForRoe";
+    private readonly User _testUser;
+    private readonly Role _testRole;
+
+    public PermissionAppServiceTests()
+    {
+        _testRole = new Role
+        {
+            Name = roleName
+        };
+        
+        _testUser = new User
+        {
+            Id = Guid.NewGuid(),
+            UserName = userName,
+            ConcurrencyStamp = Guid.NewGuid().ToString(),
+            Email = email,
+            IsDeleted = false,
+            EmailConfirmed = true,
+            NormalizedEmail = email.ToUpper(CultureInfo.GetCultureInfo("en-US")),
+            NormalizedUserName = userName.ToUpper(CultureInfo.GetCultureInfo("en-US")),
+            PasswordHash = Guid.NewGuid().ToString(),
+            PhoneNumberConfirmed = true,
+            SecurityStamp = Guid.NewGuid().ToString()
+        };
+        
+        var testUserRole = new UserRole
+        {
+            User = testUser,
+            Role = testRole
+        };
+
+        testUser.UserRoles.Add(testUserRole);
+        testRole.UserRoles.Add(testUserRole);
+
+        var userManagerMock = SetupUserManagerMock();
+        var roleManagerMock = SetupRoleManagerMock();
+
+        _permissionAppService = new PermissionAppService(userManagerMock.Object, roleManagerMock.Object);
+    }
+
+    [Fact]
+    public async Task Should_Permission_Granted_To_User()
+    {
+        var isPermissionGranted =
+            await _permissionAppService.IsUserGrantedToPermissionAsync(_testUser.UserName, TestPermissionClaimForUser);
+
+        Assert.True(isPermissionGranted);
+    }
+
+    [Fact]
+    public async Task Should_Permission_Granted_To_User_Role()
+    {
+        var isPermissionGranted =
+            await _permissionAppService.IsUserGrantedToPermissionAsync(_testUser.UserName, TestPermissionClaimForRole);
+
+        Assert.True(isPermissionGranted);
+    }
+
+    [Fact]
+    public async Task Should_Not_Permission_Granted_To_User()
+    {
+        var isPermissionNotGranted =
+            await _permissionAppService.IsUserGrantedToPermissionAsync(_testUser.UserName, "NotGrantedPermissionClaim");
+
+        Assert.False(isPermissionNotGranted);
+    }
+
+    private Mock<UserManager<User>> SetupUserManagerMock()
+    {
+        var mockUserManager = new Mock<UserManager<User>>(new Mock<IUserStore<User>>().Object, null, null, null, null, null,
+            null, null, null);
+        mockUserManager.Setup(x => x.FindByNameAsync(_testUser.UserName)).ReturnsAsync(_testUser);
+        mockUserManager.Setup(x => x.GetClaimsAsync(_testUser)).ReturnsAsync(
+            new List<Claim>
+            {
+                new Claim(CustomClaimTypes.Permission, TestPermissionClaimForUser)
+            });
+        return mockUserManager;
+    }
+
+    private Mock<RoleManager<Role>> SetupRoleManagerMock()
+    {
+        var mockRoleManager = new Mock<RoleManager<Role>>(new Mock<IRoleStore<Role>>().Object, null, null, null, null);
+        mockRoleManager.Setup(x => x.GetClaimsAsync(_testRole)).ReturnsAsync(
+            new List<Claim>
+            {
+                new Claim(CustomClaimTypes.Permission, TestPermissionClaimForRole)
+            });
+        return mockRoleManager;
+    }
+}
+````
+
+`PermissionAppService` sınıfından bir örnek oluşturabilmek için, constructor'a geçmek gereken parametreleri Mock olarak oluşturuyoruz.
+Bize gereken `UserManager` ve `RoleManager` sınıflarını Mock olarak oluşturmak. Tabiki bu sınıflar da, constructor metodlarında bazı parametreler alıyor. Bunlardan birisi `IUserStore` ve bu parametre null olamaz. Bundan dolayıda user-store nesnesini de parametre olarak vermek gerekiyor.
+
+Daha sonra da `UserManager` sınıfında kullanmak istediğimiz metodları `Mock.Setup` ile ayarlıyoruz. 
+
+````c#
+var mockUserManager = new Mock<UserManager<User>>(new Mock<IUserStore<User>>().Object, null, null, null, null, null,
+            null, null, null);
+mockUserManager.Setup(x => x.FindByNameAsync(_testUser.UserName)).ReturnsAsync(_testUser);
+mockUserManager.Setup(x => x.GetClaimsAsync(_testUser)).ReturnsAsync(
+    new List<Claim>
+    {
+        new Claim(CustomClaimTypes.Permission, TestPermissionClaimForUser)
+    });
+````
+
+Yukarıda test olarak verdiğimiz bir parametreye karşılık Mock metodlar yine test verileri dönüyorlar. 
