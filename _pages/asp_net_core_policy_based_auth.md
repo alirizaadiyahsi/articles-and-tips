@@ -1,4 +1,4 @@
-### ASP.NET Core Policy Tabanlı Yetkilendirme (Policy-Based Authorization)
+## ASP.NET Core Policy Tabanlı Yetkilendirme (Policy-Based Authorization)
 
 ASP.NET Core projelerinizde, yetkilendirmeleri `Policy` ler ile yapabiliriz. 
 Örneğin izinleri (`Permissions`) policy olarak tanımlayıp, her isteği bu izinlere göre yetkilendirebiliriz.
