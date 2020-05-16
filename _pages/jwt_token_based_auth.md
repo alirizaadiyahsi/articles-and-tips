@@ -1,4 +1,4 @@
-### ASP.NET Core JWT Token Tabanlı Doğrulama (JWT Token Based Authentication)
+## ASP.NET Core JWT Token Tabanlı Doğrulama (JWT Token Based Authentication)
 
 Bu yazıda JWT'nin ne olduğuna dair bir anlatım olmayacaktır. 
 Sadece ASP.NET Core projemizede nasıl kullanabiliriz, onun örneklerle anlatımı olacak.
