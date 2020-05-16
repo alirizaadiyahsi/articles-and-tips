@@ -1,4 +1,4 @@
-### Entity Framework Core Global Filtreler (Global Query Filters)
+## Entity Framework Core Global Filtreler (Global Query Filters)
 
 Bazen verileri veritabanından silmek yerine, `IsDeleted` diye bir alan ekleyip, veriyi silmek yerine bu alanla silinen verileri filtreleriz (SoftDelete).
 `SoftDelete` olarak silinen verileri veritabanından çekerken, her sorguda `IsDeleted==false` diye filtre eklemek yerine, global filtreleri kullanabiliriz.
