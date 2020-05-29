@@ -6,3 +6,6 @@
 - [Entity Framework Core Global Filtreler (Global Query Filters)](./_pages/ef_core_gloal_query_filters.md)
 - [ASP.NET Core JWT Tabanlı Doğrulama (JWT Based Authentication)](./_pages/jwt_token_based_auth.md)
 - [ASP.NET Core Existing Database Code First Migrations](./_pages/ef_core_existing_db.md)
+- ASP.NET Core Entegrasyon Testleri (ASP.NET Core Integration Tests with In-memory Database)
+- ASP.NET Core Çoklu Dil Desteği (ASP.NET Core Localization)
+- 
